@@ -28,6 +28,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/TargetRegistry.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <bitset>
 
@@ -40,15 +41,6 @@
 
 #define GET_SUBTARGETINFO_MC_DESC
 #include "RISCVGenSubtargetInfo.inc"
-
-namespace llvm::RISCVVInversePseudosTable {
-
-using namespace RISCV;
-
-#define GET_RISCVVInversePseudosTable_IMPL
-#include "RISCVGenSearchableTables.inc"
-
-} // namespace llvm::RISCVVInversePseudosTable
 
 using namespace llvm;
 
@@ -204,7 +196,7 @@ public:
     }
     case RISCV::AUIPC:
       setGPRState(Inst.getOperand(0).getReg(),
-                  Addr + (Inst.getOperand(1).getImm() << 12));
+                  Addr + SignExtend64<32>(Inst.getOperand(1).getImm() << 12));
       break;
     }
   }
@@ -221,23 +213,23 @@ public:
       return true;
     }
 
-    if (Inst.getOpcode() == RISCV::C_JAL || Inst.getOpcode() == RISCV::C_J) {
+    switch (Inst.getOpcode()) {
+    case RISCV::C_J:
+    case RISCV::C_JAL:
+    case RISCV::QC_E_J:
+    case RISCV::QC_E_JAL:
       Target = Addr + Inst.getOperand(0).getImm();
       return true;
-    }
-
-    if (Inst.getOpcode() == RISCV::JAL) {
+    case RISCV::JAL:
       Target = Addr + Inst.getOperand(1).getImm();
       return true;
-    }
-
-    if (Inst.getOpcode() == RISCV::JALR) {
+    case RISCV::JALR: {
       if (auto TargetRegState = getGPRState(Inst.getOperand(1).getReg())) {
         Target = *TargetRegState + Inst.getOperand(2).getImm();
         return true;
       }
-
       return false;
+    }
     }
 
     return false;
@@ -340,17 +332,8 @@ static MCInstrAnalysis *createRISCVInstrAnalysis(const MCInstrInfo *Info) {
   return new RISCVMCInstrAnalysis(Info);
 }
 
-namespace {
-MCStreamer *createRISCVELFStreamer(const Triple &T, MCContext &Context,
-                                   std::unique_ptr<MCAsmBackend> &&MAB,
-                                   std::unique_ptr<MCObjectWriter> &&MOW,
-                                   std::unique_ptr<MCCodeEmitter> &&MCE) {
-  return createRISCVELFStreamer(Context, std::move(MAB), std::move(MOW),
-                                std::move(MCE));
-}
-} // end anonymous namespace
-
-extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeRISCVTargetMC() {
+extern "C" LLVM_ABI LLVM_EXTERNAL_VISIBILITY void
+LLVMInitializeRISCVTargetMC() {
   for (Target *T : {&getTheRISCV32Target(), &getTheRISCV64Target()}) {
     TargetRegistry::RegisterMCAsmInfo(*T, createRISCVMCAsmInfo);
     TargetRegistry::RegisterMCObjectFileInfo(*T, createRISCVMCObjectFileInfo);

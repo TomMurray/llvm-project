@@ -82,6 +82,7 @@ CONFIG_H_SUBSTITUTIONS = (
     cmakedefine_vunset("LIBPFM_HAS_FIELD_CYCLES") |
     cmakedefine_vunset("HAVE_LIBPSAPI") |
     cmakedefine("HAVE_LIBPTHREAD", enable = "//config:posix") |
+    cmakedefine_vset("HAVE_DEREGISTER_FRAME") |
     cmakedefine("HAVE_PTHREAD_GETNAME_NP", enable = "//config:posix") |
     cmakedefine("HAVE_PTHREAD_SETNAME_NP", enable = "//config:posix") |
     cmakedefine_vunset("HAVE_PTHREAD_GET_NAME_NP") |  # TODO: Likely wrong?
@@ -96,6 +97,8 @@ CONFIG_H_SUBSTITUTIONS = (
         "HAVE_MALLOC_ZONE_STATISTICS",
         enable = "@platforms//os:macos",
     ) |
+    cmakedefine01_off("HAVE_ICU") |
+    cmakedefine01_off("HAVE_ICONV") |
     cmakedefine_vset("HAVE_POSIX_SPAWN") |
     cmakedefine_vset("HAVE_PREAD") |
     cmakedefine("HAVE_PTHREAD_H", enable = "//config:posix") |
@@ -149,6 +152,7 @@ CONFIG_H_SUBSTITUTIONS = (
         "@platforms//os:macos": cmakedefine_sset("LLVM_PLUGIN_EXT", ".dylib"),
         "//conditions:default": cmakedefine_sset("LLVM_PLUGIN_EXT", ".so"),
     }) |
+    cmakedefine("HAVE_SYS_IOCTL_H", enable = "//config:posix") |
     cmakedefine_sset(
         "PACKAGE_BUGREPORT",
         "https://github.com/llvm/llvm-project/issues/",
@@ -189,7 +193,8 @@ CONFIG_H_SUBSTITUTIONS = (
             "//conditions:default",
         ),
     ) |
-    cmakedefine_vset("HAVE_GETAUXVAL")
+    cmakedefine_vset("HAVE_GETAUXVAL") |
+    cmakedefine("HAVE_GETAUXVAL", enable = "@platforms//os:linux")
 )
 
 # TODO(aaronmondal): Consider reimplementing `@platforms` in a way that
@@ -211,7 +216,10 @@ LLVM_CONFIG_H_SUBSTITUTIONS = (
         "//config:{}".format(triple): {"${LLVM_DEFAULT_TARGET_TRIPLE}": triple}
         for triple in TRIPLES
     }) |
+    cmakedefine("LLVM_ENABLE_PLUGINS", enable = "//config:posix") |
     cmakedefine01_on("LLVM_ENABLE_THREADS") |
+    cmakedefine_set("LLVM_ENABLE_LLVM_EXPORT_ANNOTATIONS") |
+    cmakedefine_set("LLVM_ENABLE_LLVM_C_EXPORT_ANNOTATIONS") |
     cmakedefine01_on("LLVM_HAS_ATOMICS") |
     select({
         "//config:{}".format(triple): cmakedefine_sset(
@@ -323,5 +331,8 @@ LLVM_CONFIG_H_SUBSTITUTIONS = (
         "//config:LLVM_HAS_LOGF128_enabled": cmakedefine_set("LLVM_HAS_LOGF128"),
         "//conditions:default": cmakedefine_unset("LLVM_HAS_LOGF128"),
     }) |
-    cmakedefine_vunset("LLVM_BUILD_TELEMETRY")
+    cmakedefine_vunset("LLVM_BUILD_TELEMETRY") |
+    cmakedefine01_on("LLVM_ENABLE_TELEMETRY") |
+    cmakedefine01_off("LLVM_ENABLE_DEBUGLOC_TRACKING_COVERAGE") |
+    cmakedefine01_off("LLVM_ENABLE_DEBUGLOC_TRACKING_ORIGIN")
 )

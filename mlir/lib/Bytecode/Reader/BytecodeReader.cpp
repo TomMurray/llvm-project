@@ -895,6 +895,10 @@ private:
   SmallVector<AttrEntry> attributes;
   SmallVector<TypeEntry> types;
 
+  /// The map of cached attributes, used to avoid re-parsing the same
+  /// attribute multiple times.
+  llvm::StringMap<Attribute> attributesCache;
+
   /// A location used for error emission.
   Location fileLoc;
 
@@ -1235,7 +1239,7 @@ LogicalResult AttrTypeReader::parseAsmEntry(T &result, EncodingReader &reader,
         ::parseType(asmStr, context, &numRead, /*isKnownNullTerminated=*/true);
   else
     result = ::parseAttribute(asmStr, context, Type(), &numRead,
-                              /*isKnownNullTerminated=*/true);
+                              /*isKnownNullTerminated=*/true, &attributesCache);
   if (!result)
     return failure();
 
@@ -1733,6 +1737,7 @@ LogicalResult BytecodeReader::Impl::parseVersion(EncodingReader &reader) {
 
 //===----------------------------------------------------------------------===//
 // Dialect Section
+//===----------------------------------------------------------------------===//
 
 LogicalResult BytecodeDialect::load(const DialectReader &reader,
                                     MLIRContext *ctx) {
@@ -1874,6 +1879,7 @@ BytecodeReader::Impl::parseOpName(EncodingReader &reader,
 
 //===----------------------------------------------------------------------===//
 // Resource Section
+//===----------------------------------------------------------------------===//
 
 LogicalResult BytecodeReader::Impl::parseResourceSection(
     EncodingReader &reader, std::optional<ArrayRef<uint8_t>> resourceData,
@@ -1902,6 +1908,7 @@ LogicalResult BytecodeReader::Impl::parseResourceSection(
 
 //===----------------------------------------------------------------------===//
 // UseListOrder Helpers
+//===----------------------------------------------------------------------===//
 
 FailureOr<BytecodeReader::Impl::UseListMapT>
 BytecodeReader::Impl::parseUseListOrderForRange(EncodingReader &reader,
@@ -1981,8 +1988,7 @@ LogicalResult BytecodeReader::Impl::sortUseListOrder(Value value) {
     // If the bytecode file did not contain any custom use-list order, it means
     // that the order was descending useID. Hence, shuffle by the first index
     // of the `currentOrder` pair.
-    SmallVector<unsigned> shuffle = SmallVector<unsigned>(
-        llvm::map_range(currentOrder, [&](auto item) { return item.first; }));
+    SmallVector<unsigned> shuffle(llvm::make_first_range(currentOrder));
     value.shuffleUseList(shuffle);
     return success();
   }
@@ -1991,8 +1997,7 @@ LogicalResult BytecodeReader::Impl::sortUseListOrder(Value value) {
   UseListOrderStorage customOrder =
       valueToUseListMap.at(value.getAsOpaquePointer());
   SmallVector<unsigned, 4> shuffle = std::move(customOrder.indices);
-  uint64_t numUses =
-      std::distance(value.getUses().begin(), value.getUses().end());
+  uint64_t numUses = value.getNumUses();
 
   // If the encoding was a pair of indices `(src, dst)` for every permutation,
   // reconstruct the shuffle vector for every use. Initialize the shuffle vector
@@ -2060,6 +2065,7 @@ LogicalResult BytecodeReader::Impl::processUseLists(Operation *topLevelOp) {
 
 //===----------------------------------------------------------------------===//
 // IR Section
+//===----------------------------------------------------------------------===//
 
 LogicalResult
 BytecodeReader::Impl::parseIRSection(ArrayRef<uint8_t> sectionData,
@@ -2460,6 +2466,7 @@ LogicalResult BytecodeReader::Impl::parseBlockArguments(EncodingReader &reader,
 
 //===----------------------------------------------------------------------===//
 // Value Processing
+//===----------------------------------------------------------------------===//
 
 Value BytecodeReader::Impl::parseOperand(EncodingReader &reader) {
   std::vector<Value> &values = valueScopes.back().values;
