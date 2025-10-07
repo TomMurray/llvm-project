@@ -57,6 +57,9 @@ ATTR_RE = re.compile(ATTR_RE_STR)
 ATTR_DEF_RE_STR = r'\s*' + ATTR_RE_STR + r'\s*='
 ATTR_DEF_RE = re.compile(ATTR_DEF_RE_STR)
 
+# Regex matching SSA value or attribute variable references
+VAR_REF_RE_STR = r'([#%]\[\[\$?[a-zA-Z_][a-zA-Z0-9_]+\]\])'
+VAR_REF_RE = re.compile(VAR_REF_RE_STR)
 
 # Class used to generate and manage string substitution blocks for SSA value
 # names.
@@ -183,7 +186,7 @@ def process_line(line_chunks, variable_namer, use_ssa_name=False, strict_name_re
         # If one exists, then output the existing name.
         if variable is not None:
             output_line += "%[[" + variable + "]]"
-        else:
+        elif ssa_name:
             # Otherwise, generate a new variable.
             variable = variable_namer.generate_name(ssa_name, use_ssa_name)
             if strict_name_re:
@@ -237,7 +240,6 @@ def process_attribute_definition(line, attribute_namer):
     return None
 
 def process_attribute_references(line, attribute_namer):
-
     output_line = ''
     components = ATTR_RE.split(line)
     for component in components:
@@ -248,6 +250,18 @@ def process_attribute_references(line, attribute_namer):
         else:
             output_line += component
     return output_line
+
+def split_by_variable_reference(line, n_splits=-1):
+    outputs = ['']
+    components = VAR_REF_RE.split(line, n_splits)
+    for component in components:
+        m = VAR_REF_RE.match(component)
+        var_ref = m.group(1) if m else None
+        if var_ref:
+            outputs.append(var_ref)
+        else:
+            outputs[-1] += component
+    return outputs
 
 # Pre-process a line of input to remove any character sequences that will be
 # problematic with FileCheck.
@@ -401,14 +415,26 @@ def main():
         # FileCheck.
         input_line = preprocess_line(input_line)
 
-        # Process uses of attributes in this line
-        input_line = process_attribute_references(input_line, attribute_namer)
-
         # Split the line at the each SSA value name.
         ssa_split = input_line.split("%")
 
+        is_top_level_op = not (len(output_segments[-1]) != 0 or not ssa_split[0])
+
+        if is_top_level_op:
+            # Emit any pending attribute definitions at the start of this scope
+            for attr in pending_attr_defs:
+                attr_line = process_attribute_definition(attr, attribute_namer)
+                if attr_line:
+                    output_segments[-1].append(attr_line)
+            pending_attr_defs.clear()
+        
+        # Process uses of attributes in this line
+        ssa_split = list(
+            map(lambda s: process_attribute_references(s, attribute_namer), ssa_split))
+
         # If this is a top-level operation use 'CHECK-LABEL', otherwise 'CHECK:'.
-        if len(output_segments[-1]) != 0 or not ssa_split[0]:
+        if not is_top_level_op:
+
             output_line = "// " + args.check_prefix + ": "
             # Pad to align with the 'LABEL' statements.
             output_line += " " * len("-LABEL")
@@ -420,12 +446,9 @@ def main():
             output_line += process_line(ssa_split[1:], variable_namer)
 
         else:
-            # Emit any pending attribute definitions at the start of this scope
-            for attr in pending_attr_defs:
-                attr_line = process_attribute_definition(attr, attribute_namer)
-                if attr_line:
-                    output_segments[-1].append(attr_line)
-            pending_attr_defs.clear()
+            # CHECK-LABEL lines cannot have variable references in them, so split
+            # the first ssa_split further if a variable reference is found
+            ssa_split[0:1] = split_by_variable_reference(ssa_split[0], 1)
 
             # Output the first line chunk that does not contain an SSA name for the
             # label.
