@@ -1,0 +1,11 @@
+module "+llvm_project_overlay+llvm-project//llvm:AllTargetsDisassemblers" {
+  export *
+  use "+llvm_project_overlay+llvm-project//llvm:AArch64Disassembler"
+  use "+llvm_project_overlay+llvm-project//llvm:RISCVDisassembler"
+  use "+llvm_project_overlay+llvm-project//llvm:X86Disassembler"
+  use "crosstool"
+}
+extern module "+llvm_project_overlay+llvm-project//llvm:AArch64Disassembler" "../../../../../../bazel-out/darwin_arm64-opt-exec-ST-7983c0098c7c/bin/external/+llvm_project_overlay+llvm-project/llvm/AArch64Disassembler.cppmap"
+extern module "+llvm_project_overlay+llvm-project//llvm:RISCVDisassembler" "../../../../../../bazel-out/darwin_arm64-opt-exec-ST-7983c0098c7c/bin/external/+llvm_project_overlay+llvm-project/llvm/RISCVDisassembler.cppmap"
+extern module "+llvm_project_overlay+llvm-project//llvm:X86Disassembler" "../../../../../../bazel-out/darwin_arm64-opt-exec-ST-7983c0098c7c/bin/external/+llvm_project_overlay+llvm-project/llvm/X86Disassembler.cppmap"
+extern module "crosstool" "../../../../../../bazel-out/darwin_arm64-opt-exec-ST-7983c0098c7c/bin/external/toolchains_llvm++llvm+llvm_toolchain_default/module-aarch64-darwin.modulemap"

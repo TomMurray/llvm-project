@@ -1,0 +1,9 @@
+module "+llvm_project_overlay+llvm-project//llvm:AArch64DisassemblerInternalHeaders" {
+  export *
+  textual header "../../../../../../bazel-out/darwin_arm64-opt-exec-ST-7983c0098c7c/bin/external/+llvm_project_overlay+llvm-project/llvm/_virtual_includes/AArch64DisassemblerInternalHeaders/Disassembler/AArch64Disassembler.h"
+  textual header "../../../../../../external/+llvm_project_overlay+llvm-project/llvm/lib/Target/AArch64/Disassembler/AArch64Disassembler.h"
+  textual header "../../../../../../bazel-out/darwin_arm64-opt-exec-ST-7983c0098c7c/bin/external/+llvm_project_overlay+llvm-project/llvm/_virtual_includes/AArch64DisassemblerInternalHeaders/Disassembler/AArch64ExternalSymbolizer.h"
+  textual header "../../../../../../external/+llvm_project_overlay+llvm-project/llvm/lib/Target/AArch64/Disassembler/AArch64ExternalSymbolizer.h"
+  use "crosstool"
+}
+extern module "crosstool" "../../../../../../bazel-out/darwin_arm64-opt-exec-ST-7983c0098c7c/bin/external/toolchains_llvm++llvm+llvm_toolchain_default/module-aarch64-darwin.modulemap"
