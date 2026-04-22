@@ -11,20 +11,9 @@
 #   ./run.sh               # uses `clang++` from PATH
 #   ./run.sh /path/to/clang++
 #
-# Expected:
-#   Pre-fix:  exit 1, prints
-#             error: module ...lld:ELF does not depend on a module exporting
-#                    'llvm/Support/Compiler.h'
-#   Post-fix: exit 0, no output.
-#
 # Requirements:
-#   - macOS (PATH_MAX=1024). Linux has PATH_MAX=4096; this exact fixture does
-#     not exceed that, so the bug won't trigger. To reproduce on Linux, inflate
-#     the fixture dirname prefix (e.g. deepen `bazel-out/<longname>/bin/...`).
-#   - cwd path <= ~90 chars. If the fixture is checked out into a cwd that
-#     pushes the accumulated path well beyond 1024, this still reproduces;
-#     if cwd is much shorter than ~60 chars the bug may *not* trigger.
-#     Script sanity-checks by computing the failing path length up-front.
+#   - macOS
+#   - cwd path >= ~90 chars.
 
 set -e
 
