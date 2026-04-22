@@ -1,15 +1,4 @@
-module "+llvm_project_overlay+llvm-project//llvm:AggressiveInstCombine" {
+module "AggressiveInstCombine" {
   export *
-  textual header "../../../../../../external/+llvm_project_overlay+llvm-project/llvm/include/llvm/Transforms/AggressiveInstCombine/AggressiveInstCombine.h"
-  private textual header "../../../../../../external/+llvm_project_overlay+llvm-project/llvm/lib/Transforms/AggressiveInstCombine/AggressiveInstCombineInternal.h"
-  use "+llvm_project_overlay+llvm-project//llvm:Analysis"
-  use "+llvm_project_overlay+llvm-project//llvm:Core"
-  use "+llvm_project_overlay+llvm-project//llvm:Support"
-  use "+llvm_project_overlay+llvm-project//llvm:TransformUtils"
-  use "crosstool"
 }
-extern module "+llvm_project_overlay+llvm-project//llvm:Analysis" "../../../../../../bazel-out/darwin_arm64-opt-exec-ST-7983c0098c7c/bin/external/+llvm_project_overlay+llvm-project/llvm/Analysis.cppmap"
-extern module "+llvm_project_overlay+llvm-project//llvm:Core" "../../../../../../bazel-out/darwin_arm64-opt-exec-ST-7983c0098c7c/bin/external/+llvm_project_overlay+llvm-project/llvm/Core.cppmap"
-extern module "+llvm_project_overlay+llvm-project//llvm:Support" "../../../../../../bazel-out/darwin_arm64-opt-exec-ST-7983c0098c7c/bin/external/+llvm_project_overlay+llvm-project/llvm/Support.cppmap"
-extern module "+llvm_project_overlay+llvm-project//llvm:TransformUtils" "../../../../../../bazel-out/darwin_arm64-opt-exec-ST-7983c0098c7c/bin/external/+llvm_project_overlay+llvm-project/llvm/TransformUtils.cppmap"
-extern module "crosstool" "../../../../../../bazel-out/darwin_arm64-opt-exec-ST-7983c0098c7c/bin/external/toolchains_llvm++llvm+llvm_toolchain_default/module-aarch64-darwin.modulemap"
+extern module "Analysis" "../../../../../../bazel-out/darwin_arm64-opt-exec-ST-7983c0098c7c/bin/external/+llvm_project_overlay+llvm-project/llvm/Analysis.cppmap"

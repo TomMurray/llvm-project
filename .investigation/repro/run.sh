@@ -50,7 +50,7 @@ cd "$FIXTURE"
 
 "$CLANG" -xc++ -fsyntax-only \
   -isystem external/+llvm_project_overlay+llvm-project/llvm/include \
-  -Xclang "-fmodule-name=+llvm_project_overlay+llvm-project//lld:ELF" \
+  -Xclang "-fmodule-name=ELF" \
   -Xclang -fmodule-map-file="$LLD_REL/ELF.cppmap" \
   -Xclang -fmodule-map-file="$LLVM_REL/Support.cppmap" \
   -fmodules-strict-decluse \
